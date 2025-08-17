@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { GitClient } from '../lib/git.js';
+import { GitClient } from '../lib/cmd/git.js';
 
 const gitClient = new GitClient();
 
@@ -86,10 +86,27 @@ const pushTool = {
   },
 };
 
+const logTool = {
+  name: 'git_log',
+  description: 'コミット履歴を取得します (git log)。',
+  inputSchema: z.object({
+    count: z.number().optional().default(10).describe('取得するコミット数'),
+  }),
+  execute: async (input: { count?: number }) => {
+    try {
+      const log = await gitClient.log(input.count);
+      return { log };
+    } catch (error: any) {
+      return { error: `git log エラー: ${error.message}` };
+    }
+  },
+};
+
 export const gitTools = [
   statusTool,
   addTool,
   commitTool,
   pullTool,
   pushTool,
+  logTool,
 ];

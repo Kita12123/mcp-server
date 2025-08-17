@@ -1,25 +1,6 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { CmdClient } from '../core/cmdClient.js';
 
-const execAsync = promisify(exec);
-
-export class GitClient {
-  private async runCommand(command: string): Promise<string> {
-    try {
-      const { stdout, stderr } = await execAsync(command);
-      if (stderr) {
-        // stderrに何か出力されても必ずしもエラーとは限らないため、stdoutを返す
-        // (例: git pull時の進捗表示など)
-        return stdout.trim() || stderr.trim();
-      }
-      return stdout.trim();
-    } catch (error: any) {
-      // コマンド実行自体が失敗した場合
-      console.error(`Error executing command: ${command}`, error);
-      throw new Error(error.stderr || error.stdout || error.message);
-    }
-  }
-
+export class GitClient extends CmdClient {
   async status(): Promise<string> {
     return this.runCommand('git status --porcelain');
   }
@@ -49,5 +30,10 @@ export class GitClient {
       command += ` ${branch}`;
     }
     return this.runCommand(command);
+  }
+
+  async log(count = 10): Promise<string> {
+    const format = `"%h - %s (%cr) <%an>"`;
+    return this.runCommand(`git log -n ${count} --pretty=format:${format}`);
   }
 }
